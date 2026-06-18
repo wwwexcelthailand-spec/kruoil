@@ -1,0 +1,169 @@
+:root {
+  /* ✨ Modern Light Theme — Clean, Bright, Eye-friendly */
+  --primary: #4f46e5;           /* Indigo */
+  --primary-light: #6366f1;     /* Light Indigo */
+  --primary-dark: #3730a3;      /* Deep Indigo */
+  --secondary: #0ea5e9;         /* Sky Blue */
+  --secondary-light: #7dd3fc;   /* Soft Sky */
+  --bg-app: #f4f6f8;            /* Soft off-white — easy on eyes */
+  --bg-card: #ffffff;           /* Pure White cards */
+
+  --text-primary: #1e293b;      /* Slate-800 — dark enough to read, softer than pure black */
+  --text-secondary: #475569;    /* Slate-600 */
+  --text-muted: #94a3b8;        /* Slate-400 */
+  --border-color: #e2e8f0;      /* Slate-200 */
+
+  --success: #10b981;           /* Emerald */
+  --success-bg: #ecfdf5;
+  --danger: #ef4444;            /* Red */
+  --danger-bg: #fef2f2;
+  --warning: #f59e0b;           /* Amber */
+  --warning-bg: #fffbeb;
+
+  /* Sidebar (Bright indigo sidebar — NOT dark) */
+  --bg-sidebar: #4338ca;        /* Indigo-700 */
+  --text-sidebar: rgba(255, 255, 255, 0.85);
+  --text-sidebar-active: #ffffff;
+  --border-sidebar: rgba(255, 255, 255, 0.15);
+
+  /* Layout */
+  --font-thai: 'Sarabun', system-ui, -apple-system, sans-serif;
+  --font-eng: 'Inter', system-ui, -apple-system, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+  --shadow-glass: 0 4px 20px 0 rgba(79, 70, 229, 0.06);
+
+  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ⛔ NO Dark Mode — always light for maximum readability */
+
+/* Global Reset & Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-thai);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography Helpers */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.font-eng {
+  font-family: var(--font-eng);
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 14px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .report-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    width: 210mm; /* A4 width */
+    min-height: 297mm; /* A4 height */
+    page-break-after: always;
+  }
+  
+  /* Force black borders and text in table for printer */
+  table, th, td {
+    border-color: #000000 !important;
+    color: #000000 !important;
+  }
+
+  th {
+    background-color: #f3f4f6 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Make sure header colors are visible */
+  .report-header-bg {
+    background-color: rgba(30, 58, 138, 0.05) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Custom Micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
