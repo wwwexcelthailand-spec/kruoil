@@ -128,9 +128,6 @@ export default function TeacherLogin({ onLogin, onBack, teacherPinHash }) {
           กลับหน้าหลัก
         </button>
 
-        <p style={{fontSize: 12, color: 'var(--text-muted)', marginTop: 16, opacity: 0.7}}>
-          รหัส PIN เริ่มต้น: 1234 (เปลี่ยนได้ในหน้าตั้งค่า)
-        </p>
       </div>
     </div>
   );

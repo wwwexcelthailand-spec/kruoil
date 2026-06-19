@@ -399,6 +399,10 @@
   flex-direction: column;
   border-right: none;
   box-shadow: 4px 0 16px rgba(67, 56, 202, 0.08);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -1195,108 +1199,133 @@
    Compact Overview Dashboard (No-Scroll Styling)
    ─────────────────────────────────────────────────────────── */
 .overview-tab-active {
-  padding: 18px 24px !important;
+  padding: 14px 20px !important;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-tab-active .overview-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .overview-tab-active .content-header {
-  margin-bottom: 12px !important;
+  margin-bottom: 6px !important;
+  flex-shrink: 0;
 }
 
 .overview-tab-active .page-title {
-  font-size: 22px !important;
+  font-size: 18px !important;
+  margin-bottom: 2px !important;
+}
+
+.overview-tab-active .page-subtitle {
+  font-size: 12px !important;
 }
 
 .overview-tab-active .classroom-selector-bar {
-  padding: 8px 16px !important;
-  margin-top: -12px !important;
-  margin-bottom: 14px !important;
+  padding: 6px 14px !important;
+  margin-top: -6px !important;
+  margin-bottom: 8px !important;
   border-radius: var(--radius-sm) !important;
+  flex-shrink: 0;
 }
 
 .overview-tab-active .classroom-selector-bar button {
-  padding: 5px 12px !important;
-  font-size: 12px !important;
+  padding: 4px 10px !important;
+  font-size: 11.5px !important;
   height: auto !important;
 }
 
 .overview-tab-active .selector-label {
-  font-size: 12.5px !important;
-}
-
-.overview-tab-active .selector-right {
   font-size: 12px !important;
 }
 
+.overview-tab-active .selector-right {
+  font-size: 11px !important;
+}
+
 .overview-tab-active .stats-grid {
-  gap: 12px !important;
-  margin-bottom: 14px !important;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  flex-shrink: 0;
 }
 
 .overview-tab-active .stat-card {
-  padding: 12px 16px !important;
-  gap: 12px !important;
-  border-radius: var(--radius-sm) !important;
+  padding: 8px 12px !important;
+  gap: 8px !important;
+  border-radius: 6px !important;
 }
 
 .overview-tab-active .stat-icon {
-  width: 38px !important;
-  height: 38px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 6px !important;
 }
 
 .overview-tab-active .stat-icon svg {
-  width: 18px !important;
-  height: 18px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .overview-tab-active .stat-label {
-  font-size: 11.5px !important;
+  font-size: 10.5px !important;
   margin-bottom: 0px !important;
 }
 
 .overview-tab-active .stat-value {
-  font-size: 19px !important;
+  font-size: 16px !important;
 }
 
 .overview-tab-active .grid-2 {
-  gap: 12px !important;
-  margin-bottom: 14px !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+  flex: 1;
+  min-height: 0;
 }
 
 .overview-tab-active .table-card {
   margin-bottom: 0px !important;
-  border-radius: var(--radius-sm) !important;
+  border-radius: 6px !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .overview-tab-active .table-header-bar {
-  padding: 8px 16px !important;
+  padding: 6px 12px !important;
   background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .overview-tab-active .table-title {
-  font-size: 13.5px !important;
-}
-
-.overview-tab-active .app-table th {
-  padding: 8px 12px !important;
-  font-size: 12px !important;
-}
-
-.overview-tab-active .app-table td {
-  padding: 8px 12px !important;
   font-size: 12.5px !important;
 }
 
-.overview-tab-active .btn-secondary {
-  padding: 4px 10px !important;
+.overview-tab-active .app-table th {
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+}
+
+.overview-tab-active .app-table td {
+  padding: 5px 10px !important;
   font-size: 11.5px !important;
-  border-radius: 6px !important;
+}
+
+.overview-tab-active .btn-secondary {
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+  border-radius: 4px !important;
 }
 
 .overview-tab-active .badge {
-  padding: 2px 6px !important;
-  font-size: 10px !important;
+  padding: 1px 5px !important;
+  font-size: 9.5px !important;
 }
 
 /* Spinner animation */
