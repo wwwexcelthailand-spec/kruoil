@@ -512,7 +512,7 @@ export default function TeacherDashboard({
     if (entries.length === 0) return null;
 
     const chartW = 500;
-    const chartH = 140;
+    const chartH = 200;
     const barGap = 16;
     const barW = Math.min(60, (chartW - barGap * (entries.length + 1)) / entries.length);
     const maxVal = 100;
@@ -590,7 +590,7 @@ export default function TeacherDashboard({
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <svg viewBox="0 0 200 200" width="130" height="130">
+        <svg viewBox="0 0 200 200" width="180" height="180">
           {/* Background circle = fail */}
           <circle cx={cx} cy={cy} r={r} fill="#fecaca" />
           {/* Pass slice */}
