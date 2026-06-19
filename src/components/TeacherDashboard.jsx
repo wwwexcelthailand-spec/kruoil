@@ -512,7 +512,7 @@ export default function TeacherDashboard({
     if (entries.length === 0) return null;
 
     const chartW = 500;
-    const chartH = 85;
+    const chartH = 140;
     const barGap = 16;
     const barW = Math.min(60, (chartW - barGap * (entries.length + 1)) / entries.length);
     const maxVal = 100;
@@ -590,7 +590,7 @@ export default function TeacherDashboard({
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <svg viewBox="0 0 200 200" width="85" height="85">
+        <svg viewBox="0 0 200 200" width="130" height="130">
           {/* Background circle = fail */}
           <circle cx={cx} cy={cy} r={r} fill="#fecaca" />
           {/* Pass slice */}
@@ -820,7 +820,7 @@ export default function TeacherDashboard({
                 <div className="table-header-bar">
                   <h3 className="table-title">คะแนนเฉลี่ยรายวิชา (%)</h3>
                 </div>
-                <div style={{ padding: 8 }}>
+                <div style={{ padding: '8px 16px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
                   {Object.keys(subjectAverages).length > 0 ? renderBarChart() : (
                     <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 15 }}>ยังไม่มีข้อมูลคะแนน</p>
                   )}
@@ -830,7 +830,7 @@ export default function TeacherDashboard({
                 <div className="table-header-bar">
                   <h3 className="table-title">อัตราการสอบผ่าน / ไม่ผ่าน</h3>
                 </div>
-                <div style={{ padding: 8, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: 0 }}>
                   {totalTests > 0 ? renderPieChart() : (
                     <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 15 }}>ยังไม่มีข้อมูลการสอบ</p>
                   )}
@@ -848,7 +848,7 @@ export default function TeacherDashboard({
                     <span>นักเรียนที่ยังไม่ผ่านเกณฑ์ (น้อยกว่า 60%)</span>
                   </h3>
                 </div>
-                <div style={{ maxHeight: 110, overflowY: 'auto' }}>
+                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
                   <table className="app-table">
                     <thead>
                       <tr>
@@ -911,7 +911,7 @@ export default function TeacherDashboard({
                     <span>การยืนยันตัวตนจากผู้ปกครองล่าสุด</span>
                   </h3>
                 </div>
-                <div style={{ maxHeight: 110, overflowY: 'auto' }}>
+                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
                   <table className="app-table">
                     <thead>
                       <tr>
