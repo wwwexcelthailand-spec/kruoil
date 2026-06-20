@@ -155,7 +155,8 @@ export default function ParentPortal({
 
       const studentVisibleScores = foundStudent.scores.filter(sc => {
         if (!schoolInfo.visibleSubjects) return true;
-        return schoolInfo.visibleSubjects.includes(sc.subject);
+        const scSubNormalized = sc.subject.replace(/\s+/g, '');
+        return schoolInfo.visibleSubjects.some(sub => sub.replace(/\s+/g, '') === scSubNormalized);
       });
 
       if (studentVisibleScores.length === 0) {
@@ -249,7 +250,8 @@ export default function ParentPortal({
     // Check if student has visible scores
     const studentVisibleScores = foundStudent.scores.filter(sc => {
       if (!schoolInfo.visibleSubjects) return true;
-      return schoolInfo.visibleSubjects.includes(sc.subject);
+      const scSubNormalized = sc.subject.replace(/\s+/g, '');
+      return schoolInfo.visibleSubjects.some(sub => sub.replace(/\s+/g, '') === scSubNormalized);
     });
 
     if (studentVisibleScores.length === 0) {
@@ -520,7 +522,8 @@ export default function ParentPortal({
             {(() => {
               const visibleScores = student.scores.filter(sc => {
                 if (!schoolInfo.visibleSubjects) return true;
-                return schoolInfo.visibleSubjects.includes(sc.subject);
+                const scSubNormalized = sc.subject.replace(/\s+/g, '');
+                return schoolInfo.visibleSubjects.some(sub => sub.replace(/\s+/g, '') === scSubNormalized);
               });
 
               if (visibleScores.length === 0) {
