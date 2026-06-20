@@ -78,7 +78,12 @@ function App() {
         setLoading(true);
         const data = await supabaseService.fetchInitialData();
         if (data) {
-          if (data.schoolInfo) setSchoolInfo(data.schoolInfo);
+          if (data.schoolInfo) {
+            setSchoolInfo(data.schoolInfo);
+            if (data.schoolInfo.teacherPinHash) {
+              setTeacherPinHash(data.schoolInfo.teacherPinHash);
+            }
+          }
           if (data.subjects && data.subjects.length > 0) setSubjects(data.subjects);
           if (data.students) setStudents(data.students);
           if (data.acknowledgements) setAcknowledgements(data.acknowledgements);
