@@ -6,6 +6,100 @@ import schoolLogo from '../assets/school_logo.png';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
+// Helper to normalize birthdate formats (e.g. YYYY-MM-DD, DD/MM/YYYY, etc.) to YYYY-MM-DD
+// and convert Thai Buddhist Era (B.E.) year (> 2400) to Christian Era (C.E.) year.
+// Now supports Thai digits, Thai month abbreviations/names, and avoids timezone shift issues.
+const normalizeDate = (dateStr) => {
+  if (!dateStr) return '';
+  
+  // Convert Thai digits to Arabic digits first
+  let cleaned = dateStr.toString().trim();
+  cleaned = cleaned.replace(/[๐-๙]/g, (d) => String(d.charCodeAt(0) - 3664));
+  
+  let year = '';
+  let month = '';
+  let day = '';
+  
+  // 1. Format: YYYY-MM-DD (e.g. 2019-05-15 or 2019-05-15T00:00:00Z)
+  const ymdMatch = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymdMatch) {
+    year = ymdMatch[1];
+    month = ymdMatch[2];
+    day = ymdMatch[3];
+  } else {
+    // 2. Format: DD/MM/YYYY or DD-MM-YYYY (e.g. 15/05/2562)
+    const dmyMatch = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (dmyMatch) {
+      day = dmyMatch[1].padStart(2, '0');
+      month = dmyMatch[2].padStart(2, '0');
+      year = dmyMatch[3];
+    } else {
+      // 3. Format: Thai Month Name (e.g. 15 พ.ค. 2562 or 15 พฤษภาคม 2562)
+      const thaiMonths = {
+        'ม.ค.': '01', 'มค': '01', 'มกราคม': '01',
+        'ก.พ.': '02', 'กพ': '02', 'กุมภาพันธ์': '02',
+        'มี.ย.': '03', 'มย': '03', 'มีนาคม': '03',
+        'เม.ย.': '04', 'เมย': '04', 'เมษายน': '04',
+        'พ.ค.': '05', 'พค': '05', 'พฤษภาคม': '05',
+        'มิ.ย.': '06', 'มิย': '06', 'มิถุนายน': '06',
+        'ก.ค.': '07', 'กค': '07', 'กรกฎาคม': '07',
+        'ส.ค.': '08', 'สค': '08', 'สิงหาคม': '08',
+        'ก.ย.': '09', 'กย': '09', 'กันยายน': '09',
+        'ต.ค.': '10', 'ตค': '10', 'ตุลาคม': '10',
+        'พ.ย.': '11', 'พย': '11', 'พฤศจิกายน': '11',
+        'ธ.ค.': '12', 'ธค': '12', 'ธันวาคม': '12'
+      };
+
+      const thaiMatch = cleaned.match(/^(\d{1,2})\s+([ก-ฮ\.]+)\s+(\d{2,4})/);
+      if (thaiMatch) {
+        day = thaiMatch[1].padStart(2, '0');
+        const monthText = thaiMatch[2];
+        const yearText = thaiMatch[3];
+        
+        const cleanMonth = monthText.replace(/\./g, '').trim();
+        const monthVal = thaiMonths[monthText] || thaiMonths[cleanMonth];
+        if (monthVal) {
+          month = monthVal;
+          let numericYear = parseInt(yearText, 10);
+          if (yearText.length === 2) {
+            numericYear += 2500;
+          }
+          year = String(numericYear);
+        }
+      } else {
+        // 4. JS Date Parsing fallback (only if not matched by custom parsers)
+        try {
+          const d = new Date(cleaned);
+          if (!isNaN(d.getTime())) {
+            // Note: Use UTC methods if the input looks like an ISO string to avoid local timezone shift,
+            // otherwise use local methods.
+            const isISO = cleaned.includes('T') || cleaned.includes('Z');
+            if (isISO) {
+              year = String(d.getUTCFullYear());
+              month = String(d.getUTCMonth() + 1).padStart(2, '0');
+              day = String(d.getUTCDate()).padStart(2, '0');
+            } else {
+              year = String(d.getFullYear());
+              month = String(d.getMonth() + 1).padStart(2, '0');
+              day = String(d.getDate()).padStart(2, '0');
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  
+  if (year && month && day) {
+    let numericYear = parseInt(year, 10);
+    if (numericYear > 2400) {
+      numericYear -= 543;
+    }
+    return `${numericYear}-${month}-${day}`;
+  }
+  
+  return cleaned;
+};
+
 export default function ParentPortal({
   students,
   schoolInfo,
@@ -129,8 +223,8 @@ export default function ParentPortal({
     let isValid = false;
     if (foundStudent) {
       if (foundStudent.birthDate) {
-        // Student has birthdate — must match
-        isValid = birthDateInput === foundStudent.birthDate;
+        // Student has birthdate — must match (normalized)
+        isValid = normalizeDate(birthDateInput) === normalizeDate(foundStudent.birthDate);
       } else {
         // Backwards compatibility: no birthDate on student, allow login with just ID
         isValid = true;
