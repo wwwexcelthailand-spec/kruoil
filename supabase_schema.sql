@@ -11,6 +11,7 @@ create table if not exists public.students (
     id text primary key,
     name text not null,
     birth_date text,
+    national_id text,
     class_level text not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -74,3 +75,16 @@ values
     ('subj-3', 'ภาษาไทย', 15),
     ('subj-4', 'Basic English', 10)
 on conflict (id) do nothing;
+
+-- สำหรับฐานข้อมูลที่มีอยู่แล้ว: เพิ่มคอลัมน์ national_id ถ้ายังไม่มี
+do $$
+begin
+    if not exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'students'
+          and column_name = 'national_id'
+    ) then
+        alter table public.students add column national_id text;
+    end if;
+end $$;

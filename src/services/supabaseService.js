@@ -15,6 +15,7 @@ const mapStudent = (dbStudent) => ({
   id: dbStudent.id,
   name: dbStudent.name,
   birthDate: dbStudent.birth_date || '',
+  nationalId: dbStudent.national_id || '',
   classLevel: dbStudent.class_level,
   scores: (dbStudent.scores || []).map(sc => ({
     id: sc.id,
@@ -144,6 +145,7 @@ export const supabaseService = {
         id: student.id,
         name: student.name,
         birth_date: student.birthDate,
+        national_id: student.nationalId || '',
         class_level: student.classLevel
       });
     if (error) throw error;
@@ -175,6 +177,7 @@ export const supabaseService = {
       .update({
         name: student.name,
         birth_date: student.birthDate,
+        national_id: student.nationalId || '',
         class_level: student.classLevel
       })
       .eq('id', student.id);

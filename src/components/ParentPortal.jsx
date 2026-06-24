@@ -208,7 +208,7 @@ export default function ParentPortal({
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
-  /** Handle login with student ID + birthdate verification */
+  /** Handle login with student ID + national ID (last 4 digits) verification */
   const handleVerify = useCallback((e) => {
     e.preventDefault();
 
@@ -220,14 +220,16 @@ export default function ParentPortal({
 
     const foundStudent = students.find(s => s.id === cleanId);
 
-    // Verify student exists AND birthdate matches (if student has birthDate set)
+    // Verify student exists AND last 4 digits of national ID matches
     let isValid = false;
     if (foundStudent) {
-      if (foundStudent.birthDate) {
-        // Student has birthdate — must match (normalized)
-        isValid = normalizeDate(birthDateInput) === normalizeDate(foundStudent.birthDate);
+      if (foundStudent.nationalId) {
+        // Compare last 4 digits of national ID
+        const last4 = foundStudent.nationalId.slice(-4);
+        const inputLast4 = birthDateInput.trim();
+        isValid = inputLast4 === last4;
       } else {
-        // Backwards compatibility: no birthDate on student, allow login with just ID
+        // Backwards compatibility: no nationalId on student, allow login with just ID
         isValid = true;
       }
     }
@@ -236,7 +238,7 @@ export default function ParentPortal({
       // Increment failed attempts
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
-      setSearchError('ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบรหัสและวันเกิด');
+      setSearchError('ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบรหัสนักเรียนและเลขบัตรประชาชน');
 
       // Lock out after MAX_LOGIN_ATTEMPTS failures
       if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
@@ -339,7 +341,7 @@ export default function ParentPortal({
               <input
                 type="text"
                 maxLength="6"
-                placeholder="ระบุรหัส 4 หลัก เช่น 1641"
+                placeholder="ระบุรหัสประจำตัว เช่น 1872"
                 className="form-input font-eng"
                 value={studentIdInput}
                 onChange={(e) => setStudentIdInput(e.target.value)}
@@ -348,11 +350,13 @@ export default function ParentPortal({
               />
             </div>
 
-            {/* Birthdate verification field */}
+            {/* National ID last 4 digits verification field */}
             <div className="input-group">
-              <label className="input-label">วันเกิด</label>
+              <label className="input-label">เลขบัตรประชาชน (4 ตัวท้าย)</label>
               <input
-                type="date"
+                type="text"
+                maxLength="4"
+                placeholder="เช่น 0123"
                 className="form-input font-eng"
                 value={birthDateInput}
                 onChange={(e) => setBirthDateInput(e.target.value)}
@@ -506,87 +510,88 @@ export default function ParentPortal({
           ทางโรงเรียนขอแจ้งผลการสอบรายหน่วยของนักเรียน ดังนี้
         </div>
 
-        {/* ── Scores Table with Progress Bars ── */}
-        <table className="report-score-table">
-          <thead>
-            <tr>
-              <th style={{ width: '22%' }}>วิชา</th>
-              <th style={{ width: '24%' }}>ชื่อหน่วย</th>
-              <th style={{ width: '10%' }}>คะแนนเต็ม</th>
-              <th style={{ width: '18%' }}>คะแนนที่ได้</th>
-              <th style={{ width: '12%' }}>แก้แล้ว</th>
-              <th style={{ width: '14%' }}>สอบซ่อมวันที่</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(() => {
-              const visibleScores = student.scores.filter(sc => {
-                if (!schoolInfo.visibleSubjects) return true;
-                const scSubNormalized = sc.subject.replace(/\s+/g, '');
-                return schoolInfo.visibleSubjects.some(sub => sub.replace(/\s+/g, '') === scSubNormalized);
-              });
+        <div className="table-responsive">
+          <table className="report-score-table">
+            <thead>
+              <tr>
+                <th style={{ width: '22%' }}>วิชา</th>
+                <th style={{ width: '24%' }}>ชื่อหน่วย</th>
+                <th style={{ width: '10%' }}>คะแนนเต็ม</th>
+                <th style={{ width: '18%' }}>คะแนนที่ได้</th>
+                <th style={{ width: '12%' }}>แก้แล้ว</th>
+                <th style={{ width: '14%' }}>สอบซ่อมวันที่</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => {
+                const visibleScores = student.scores.filter(sc => {
+                  if (!schoolInfo.visibleSubjects) return true;
+                  const scSubNormalized = sc.subject.replace(/\s+/g, '');
+                  return schoolInfo.visibleSubjects.some(sub => sub.replace(/\s+/g, '') === scSubNormalized);
+                });
 
-              if (visibleScores.length === 0) {
-                return (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#94a3b8', fontStyle: 'italic' }}>
-                      ไม่มีรายวิชาที่กำหนดให้แสดงผลในขณะนี้
-                    </td>
-                  </tr>
-                );
-              }
+                if (visibleScores.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: 24, color: '#94a3b8', fontStyle: 'italic' }}>
+                        ไม่มีรายวิชาที่กำหนดให้แสดงผลในขณะนี้
+                      </td>
+                    </tr>
+                  );
+                }
 
-              return visibleScores.map(sc => {
-                const maxScore = sc.maxScore || 1; // Prevent division by zero
-                const percentage = Math.round((sc.score / maxScore) * 100);
-                const isPass = sc.score >= (maxScore * 0.6);
-                const barColor = getScoreColor(percentage);
+                return visibleScores.map(sc => {
+                  const maxScore = sc.maxScore || 1; // Prevent division by zero
+                  const percentage = Math.round((sc.score / maxScore) * 100);
+                  const isPass = sc.score >= (maxScore * 0.6);
+                  const barColor = getScoreColor(percentage);
 
-                return (
-                  <tr key={sc.id}>
-                    <td className="text-left" style={{ fontWeight: 'bold' }}>
-                      {sc.subject}
-                    </td>
-                    <td className="text-left" style={{ fontSize: 13 }}>
-                      {sc.unitName}
-                    </td>
-                    <td className="font-eng">{sc.maxScore}</td>
-                    <td className="font-eng" style={{ fontWeight: 'bold' }}>
-                      <div>
-                        {/* Score value with percentage badge */}
-                        <span style={{
-                          color: !isPass && sc.corrected === 'ยังไม่แก้' ? '#ef4444' : 'inherit'
-                        }}>
-                          {sc.score}
-                        </span>
-                        {' '}
-                        <span className={getScoreBadgeClass(percentage)} style={{ fontSize: 10, padding: '2px 8px' }}>
-                          {percentage}%
-                        </span>
-                        {/* Progress bar */}
-                        <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, marginTop: 4 }}>
-                          <div style={{
-                            width: `${Math.min(percentage, 100)}%`,
-                            height: '100%',
-                            background: barColor,
-                            borderRadius: 3,
-                            transition: 'width 0.3s'
-                          }} />
+                  return (
+                    <tr key={sc.id}>
+                      <td className="text-left" style={{ fontWeight: 'bold' }}>
+                        {sc.subject}
+                      </td>
+                      <td className="text-left" style={{ fontSize: 13 }}>
+                        {sc.unitName}
+                      </td>
+                      <td className="font-eng">{sc.maxScore}</td>
+                      <td className="font-eng" style={{ fontWeight: 'bold' }}>
+                        <div>
+                          {/* Score value with percentage badge */}
+                          <span style={{
+                            color: !isPass && sc.corrected === 'ยังไม่แก้' ? '#ef4444' : 'inherit'
+                          }}>
+                            {sc.score}
+                          </span>
+                          {' '}
+                          <span className={getScoreBadgeClass(percentage)} style={{ fontSize: 10, padding: '2px 8px' }}>
+                            {percentage}%
+                          </span>
+                          {/* Progress bar */}
+                          <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, marginTop: 4 }}>
+                            <div style={{
+                              width: `${Math.min(percentage, 100)}%`,
+                              height: '100%',
+                              background: barColor,
+                              borderRadius: 3,
+                              transition: 'width 0.3s'
+                            }} />
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      {isPass ? '' : sc.corrected === 'แก้แล้ว' ? 'แก้แล้ว' : 'ยังไม่แก้'}
-                    </td>
-                    <td className="font-eng" style={{ fontSize: 12 }}>
-                      {isPass ? '' : sc.retakeDate || '-'}
-                    </td>
-                  </tr>
-                );
-              });
-            })()}
-          </tbody>
-        </table>
+                      </td>
+                      <td>
+                        {isPass ? '' : sc.corrected === 'แก้แล้ว' ? 'แก้แล้ว' : 'ยังไม่แก้'}
+                      </td>
+                      <td className="font-eng" style={{ fontSize: 12 }}>
+                        {isPass ? '' : sc.retakeDate || '-'}
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
+            </tbody>
+          </table>
+        </div>
 
         {/* Footer notice */}
         <div className="report-passing-notice">

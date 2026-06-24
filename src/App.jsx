@@ -206,6 +206,7 @@ function App() {
           if (
             newStudent.name !== oldStudent.name ||
             newStudent.birthDate !== oldStudent.birthDate ||
+            newStudent.nationalId !== oldStudent.nationalId ||
             newStudent.classLevel !== oldStudent.classLevel
           ) {
             await supabaseService.updateStudent(newStudent);

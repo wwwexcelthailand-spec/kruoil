@@ -20,7 +20,8 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Inbox
+  Inbox,
+  Menu
 } from 'lucide-react';
 import { hashPin } from '../mockData';
 import schoolLogo from '../assets/school_logo.png';
@@ -40,6 +41,7 @@ export default function TeacherDashboard({
   onLogout
 }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // ── Student CRUD states ──
   const [editingStudent, setEditingStudent] = useState(null);
@@ -47,6 +49,7 @@ export default function TeacherDashboard({
   const [newStudentId, setNewStudentId] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentBirthDate, setNewStudentBirthDate] = useState('');
+  const [newStudentNationalId, setNewStudentNationalId] = useState('');
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
 
   // ── Score editing states ──
@@ -177,6 +180,7 @@ export default function TeacherDashboard({
       id: newStudentId,
       name: newStudentName,
       birthDate: newStudentBirthDate || '',
+      nationalId: newStudentNationalId || '',
       classLevel: selectedClassroom,
       scores: firstSubject ? [{
         id: 'score-' + Date.now() + '-1',
@@ -193,6 +197,7 @@ export default function TeacherDashboard({
     setNewStudentId('');
     setNewStudentName('');
     setNewStudentBirthDate('');
+    setNewStudentNationalId('');
     setShowAddStudentModal(false);
   };
 
@@ -412,6 +417,7 @@ export default function TeacherDashboard({
       const idIdx = header.findIndex(h => h === 'รหัส');
       const nameIdx = header.findIndex(h => h === 'ชื่อ-นามสกุล');
       const bdIdx = header.findIndex(h => h === 'วันเกิด');
+      const nidIdx = header.findIndex(h => h === 'เลขบัตรประชาชน');
 
       if (idIdx === -1 || nameIdx === -1) {
         alert('ไม่พบคอลัมน์ "รหัส" หรือ "ชื่อ-นามสกุล" ในไฟล์ CSV');
@@ -426,6 +432,7 @@ export default function TeacherDashboard({
         const id = cols[idIdx] || '';
         const name = cols[nameIdx] || '';
         const birthDate = bdIdx !== -1 ? (cols[bdIdx] || '') : '';
+        const nationalId = nidIdx !== -1 ? (cols[nidIdx] || '') : '';
 
         if (!id || !name) continue;
 
@@ -433,6 +440,7 @@ export default function TeacherDashboard({
           id,
           name,
           birthDate,
+          nationalId,
           isDuplicate: existingIds.has(id)
         });
       }
@@ -458,6 +466,7 @@ export default function TeacherDashboard({
       id: r.id,
       name: r.name,
       birthDate: r.birthDate,
+      nationalId: r.nationalId || '',
       classLevel: selectedClassroom,
       scores: firstSubject ? [{
         id: 'score-' + Date.now() + '-' + r.id,
@@ -480,12 +489,12 @@ export default function TeacherDashboard({
   // ───────────────────────────────
   const handleCsvExport = () => {
     const subjectNames = subjects.map(s => s.name);
-    let csv = 'รหัส,ชื่อ-นามสกุล,วันเกิด,ห้องเรียน';
+    let csv = 'รหัส,ชื่อ-นามสกุล,วันเกิด,เลขบัตรประชาชน,ห้องเรียน';
     subjectNames.forEach(sn => { csv += ',' + sn; });
     csv += '\n';
 
     filteredStudents.forEach(st => {
-      csv += `${st.id},${st.name},${st.birthDate || ''},${st.classLevel}`;
+      csv += `${st.id},${st.name},${st.birthDate || ''},${st.nationalId || ''},${st.classLevel}`;
       subjectNames.forEach(sn => {
         const sc = st.scores.find(s => s.subject === sn);
         csv += ',' + (sc ? `${sc.score}/${sc.maxScore}` : '-');
@@ -589,7 +598,7 @@ export default function TeacherDashboard({
         : `M ${cx},${cy} L ${startX},${startY} A ${r},${r} 0 ${largeArc},1 ${endX},${endY} Z`;
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="pie-chart-container" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <svg viewBox="0 0 200 200" width="180" height="180">
           {/* Background circle = fail */}
           <circle cx={cx} cy={cy} r={r} fill="#fecaca" />
@@ -673,8 +682,38 @@ export default function TeacherDashboard({
   return (
     <div className="dashboard-container">
 
+      {/* 📱 Mobile Top Navigation Header */}
+      <div className="mobile-header no-print">
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="เมนูควบคุม"
+        >
+          <Menu size={24} />
+        </button>
+        <div className="mobile-header-title">
+          <span className="mobile-school-name">{schoolInfo.schoolName}</span>
+          <span className="mobile-page-name">
+            {activeTab === 'overview' && 'สถิติภาพรวม'}
+            {activeTab === 'scores' && 'จัดการคะแนน'}
+            {activeTab === 'students' && 'รายชื่อนักเรียน'}
+            {activeTab === 'subjects' && 'จัดการวิชา'}
+            {activeTab === 'acknowledgements' && 'ผู้ปกครอง'}
+            {activeTab === 'settings' && 'ตั้งค่าทั่วไป'}
+          </span>
+        </div>
+      </div>
+
+      {/* 📱 Mobile Backdrop Sidebar Drawer Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="sidebar-backdrop no-print" 
+          onClick={() => setIsMobileMenuOpen(false)} 
+        />
+      )}
+
       {/* ════════ Sidebar ════════ */}
-      <aside className="sidebar no-print">
+      <aside className={`sidebar no-print ${isMobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <div style={{
             width: 44, height: 44, borderRadius: '50%', background: '#ffffff',
@@ -691,7 +730,10 @@ export default function TeacherDashboard({
         <nav className="sidebar-menu">
           <button
             className={`menu-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
+            onClick={() => {
+              setActiveTab('overview');
+              setIsMobileMenuOpen(false);
+            }}
           >
             <LayoutDashboard size={18} />
             <span>สถิติภาพรวม</span>
@@ -701,6 +743,7 @@ export default function TeacherDashboard({
             className={`menu-item ${activeTab === 'scores' ? 'active' : ''}`}
             onClick={() => {
               setActiveTab('scores');
+              setIsMobileMenuOpen(false);
               if (filteredStudents.length > 0 && !selectedStudentForScores) {
                 setSelectedStudentForScores(filteredStudents[0].id);
               }
@@ -712,7 +755,10 @@ export default function TeacherDashboard({
 
           <button
             className={`menu-item ${activeTab === 'students' ? 'active' : ''}`}
-            onClick={() => setActiveTab('students')}
+            onClick={() => {
+              setActiveTab('students');
+              setIsMobileMenuOpen(false);
+            }}
           >
             <Users size={18} />
             <span>รายชื่อนักเรียน</span>
@@ -720,7 +766,10 @@ export default function TeacherDashboard({
 
           <button
             className={`menu-item ${activeTab === 'subjects' ? 'active' : ''}`}
-            onClick={() => setActiveTab('subjects')}
+            onClick={() => {
+              setActiveTab('subjects');
+              setIsMobileMenuOpen(false);
+            }}
           >
             <BookMarked size={18} />
             <span>จัดการรายวิชา</span>
@@ -728,7 +777,10 @@ export default function TeacherDashboard({
 
           <button
             className={`menu-item ${activeTab === 'acknowledgements' ? 'active' : ''}`}
-            onClick={() => setActiveTab('acknowledgements')}
+            onClick={() => {
+              setActiveTab('acknowledgements');
+              setIsMobileMenuOpen(false);
+            }}
           >
             <UserCheck size={18} />
             <span>การตอบรับของผู้ปกครอง</span>
@@ -736,7 +788,10 @@ export default function TeacherDashboard({
 
           <button
             className={`menu-item ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
+            onClick={() => {
+              setActiveTab('settings');
+              setIsMobileMenuOpen(false);
+            }}
           >
             <Settings size={18} />
             <span>ตั้งค่าข้อมูลทั่วไป</span>
@@ -753,7 +808,10 @@ export default function TeacherDashboard({
               background: 'rgba(255,255,255,0.12)', color: '#ffffff',
               borderColor: 'rgba(255,255,255,0.25)'
             }}
-            onClick={onLogout}
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onLogout();
+            }}
           >
             <LogOut size={16} />
             ออกจากระบบ
@@ -848,7 +906,7 @@ export default function TeacherDashboard({
                     <span>นักเรียนที่ยังไม่ผ่านเกณฑ์ (น้อยกว่า 60%)</span>
                   </h3>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                <div className="table-responsive" style={{ flex: 1, border: 'none', borderRadius: 0, marginBottom: 0 }}>
                   <table className="app-table">
                     <thead>
                       <tr>
@@ -911,7 +969,7 @@ export default function TeacherDashboard({
                     <span>การยืนยันตัวตนจากผู้ปกครองล่าสุด</span>
                   </h3>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                <div className="table-responsive" style={{ flex: 1, border: 'none', borderRadius: 0, marginBottom: 0 }}>
                   <table className="app-table">
                     <thead>
                       <tr>
@@ -1033,6 +1091,7 @@ export default function TeacherDashboard({
                     <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                       รหัสประจำตัว: {currentStudent.id} | ระดับชั้น: {currentStudent.classLevel}
                       {currentStudent.birthDate && ` | วันเกิด: ${currentStudent.birthDate}`}
+                      {currentStudent.nationalId && ` | เลขบัตรประชาชน: ${currentStudent.nationalId}`}
                     </p>
                   </div>
                   <button
@@ -1056,155 +1115,157 @@ export default function TeacherDashboard({
                   </div>
                 )}
 
-                <table className="app-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '25%' }}>วิชา</th>
-                      <th style={{ width: '25%' }}>ชื่อหน่วยการเรียนรู้</th>
-                      <th style={{ width: '12%', textAlign: 'center' }}>คะแนนเต็ม</th>
-                      <th style={{ width: '12%', textAlign: 'center' }}>คะแนนที่ได้</th>
-                      <th style={{ width: '12%', textAlign: 'center' }}>สถานะ / การแก้</th>
-                      <th style={{ width: '14%' }}>สอบซ่อมวันที่</th>
-                      <th style={{ width: '10%', textAlign: 'center' }}>จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentStudent.scores.length === 0 ? (
-                      <tr className="no-hover">
-                        <td colSpan="7" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>
-                          ยังไม่มีการระบุรายวิชาและคะแนนสอบสำหรับนักเรียนคนนี้
-                        </td>
+                <div className="table-responsive">
+                  <table className="app-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '25%' }}>วิชา</th>
+                        <th style={{ width: '25%' }}>ชื่อหน่วยการเรียนรู้</th>
+                        <th style={{ width: '12%', textAlign: 'center' }}>คะแนนเต็ม</th>
+                        <th style={{ width: '12%', textAlign: 'center' }}>คะแนนที่ได้</th>
+                        <th style={{ width: '12%', textAlign: 'center' }}>สถานะ / การแก้</th>
+                        <th style={{ width: '14%' }}>สอบซ่อมวันที่</th>
+                        <th style={{ width: '10%', textAlign: 'center' }}>จัดการ</th>
                       </tr>
-                    ) : (
-                      currentStudent.scores.map(sc => {
-                        const isEditing = editingScoreId === sc.id;
-                        const isPass = sc.score >= (sc.maxScore * 0.6);
+                    </thead>
+                    <tbody>
+                      {currentStudent.scores.length === 0 ? (
+                        <tr className="no-hover">
+                          <td colSpan="7" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>
+                            ยังไม่มีการระบุรายวิชาและคะแนนสอบสำหรับนักเรียนคนนี้
+                          </td>
+                        </tr>
+                      ) : (
+                        currentStudent.scores.map(sc => {
+                          const isEditing = editingScoreId === sc.id;
+                          const isPass = sc.score >= (sc.maxScore * 0.6);
 
-                        if (isEditing) {
+                          if (isEditing) {
+                            return (
+                              <tr key={sc.id} className="score-edit-row">
+                                <td>
+                                  <select
+                                    value={tempScoreVal.subject}
+                                    onChange={(e) => {
+                                      const chosen = subjects.find(s => s.name === e.target.value);
+                                      setTempScoreVal({
+                                        ...tempScoreVal,
+                                        subject: e.target.value,
+                                        maxScore: chosen ? chosen.defaultMaxScore : tempScoreVal.maxScore
+                                      });
+                                    }}
+                                  >
+                                    {subjects.map(s => (
+                                      <option key={s.id} value={s.name}>{s.name}</option>
+                                    ))}
+                                    {/* Allow freeform if current subject not in list */}
+                                    {!subjects.find(s => s.name === tempScoreVal.subject) && (
+                                      <option value={tempScoreVal.subject}>{tempScoreVal.subject} (กำหนดเอง)</option>
+                                    )}
+                                  </select>
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    value={tempScoreVal.unitName}
+                                    onChange={(e) => setTempScoreVal({ ...tempScoreVal, unitName: e.target.value })}
+                                  />
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <input
+                                    type="number"
+                                    style={{ textAlign: 'center', width: 70 }}
+                                    value={tempScoreVal.maxScore}
+                                    min="1"
+                                    onChange={(e) => setTempScoreVal({ ...tempScoreVal, maxScore: e.target.value })}
+                                  />
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <input
+                                    type="number"
+                                    style={{ textAlign: 'center', width: 70 }}
+                                    value={tempScoreVal.score}
+                                    min="0"
+                                    onChange={(e) => setTempScoreVal({ ...tempScoreVal, score: e.target.value })}
+                                  />
+                                </td>
+                                <td>
+                                  <select
+                                    value={tempScoreVal.corrected}
+                                    onChange={(e) => setTempScoreVal({ ...tempScoreVal, corrected: e.target.value })}
+                                    disabled={Number(tempScoreVal.score) >= (Number(tempScoreVal.maxScore) * 0.6)}
+                                  >
+                                    <option value="ผ่านเกณฑ์">ผ่านเกณฑ์ (&gt;= 60%)</option>
+                                    <option value="ยังไม่แก้">ยังไม่แก้</option>
+                                    <option value="แก้แล้ว">แก้แล้ว (ซ่อมผ่าน)</option>
+                                  </select>
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    placeholder="เช่น 20 มิ.ย. 69"
+                                    value={tempScoreVal.retakeDate}
+                                    onChange={(e) => setTempScoreVal({ ...tempScoreVal, retakeDate: e.target.value })}
+                                  />
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                                    <button
+                                      className="btn-icon-only"
+                                      style={{ color: 'var(--success)', borderColor: 'var(--success)' }}
+                                      onClick={() => handleSaveScoreRow(currentStudent.id, sc.id)}
+                                    >
+                                      <Save size={14} />
+                                    </button>
+                                    <button
+                                      className="btn-icon-only"
+                                      onClick={() => { setEditingScoreId(null); setScoreError(''); }}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          }
+
                           return (
-                            <tr key={sc.id} className="score-edit-row">
-                              <td>
-                                <select
-                                  value={tempScoreVal.subject}
-                                  onChange={(e) => {
-                                    const chosen = subjects.find(s => s.name === e.target.value);
-                                    setTempScoreVal({
-                                      ...tempScoreVal,
-                                      subject: e.target.value,
-                                      maxScore: chosen ? chosen.defaultMaxScore : tempScoreVal.maxScore
-                                    });
-                                  }}
-                                >
-                                  {subjects.map(s => (
-                                    <option key={s.id} value={s.name}>{s.name}</option>
-                                  ))}
-                                  {/* Allow freeform if current subject not in list */}
-                                  {!subjects.find(s => s.name === tempScoreVal.subject) && (
-                                    <option value={tempScoreVal.subject}>{tempScoreVal.subject} (กำหนดเอง)</option>
-                                  )}
-                                </select>
-                              </td>
-                              <td>
-                                <input
-                                  type="text"
-                                  value={tempScoreVal.unitName}
-                                  onChange={(e) => setTempScoreVal({ ...tempScoreVal, unitName: e.target.value })}
-                                />
-                              </td>
+                            <tr key={sc.id}>
+                              <td><strong>{sc.subject}</strong></td>
+                              <td>{sc.unitName}</td>
+                              <td className="font-eng" style={{ textAlign: 'center' }}>{sc.maxScore}</td>
+                              <td className="font-eng" style={{ textAlign: 'center', fontWeight: 'bold' }}>{sc.score}</td>
                               <td style={{ textAlign: 'center' }}>
-                                <input
-                                  type="number"
-                                  style={{ textAlign: 'center', width: 70 }}
-                                  value={tempScoreVal.maxScore}
-                                  min="1"
-                                  onChange={(e) => setTempScoreVal({ ...tempScoreVal, maxScore: e.target.value })}
-                                />
+                                {isPass ? (
+                                  <span className="badge badge-success">ผ่านเกณฑ์</span>
+                                ) : sc.corrected === 'แก้แล้ว' ? (
+                                  <span className="badge badge-success">แก้แล้ว</span>
+                                ) : (
+                                  <span className="badge badge-danger">ยังไม่แก้</span>
+                                )}
                               </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <input
-                                  type="number"
-                                  style={{ textAlign: 'center', width: 70 }}
-                                  value={tempScoreVal.score}
-                                  min="0"
-                                  onChange={(e) => setTempScoreVal({ ...tempScoreVal, score: e.target.value })}
-                                />
-                              </td>
-                              <td>
-                                <select
-                                  value={tempScoreVal.corrected}
-                                  onChange={(e) => setTempScoreVal({ ...tempScoreVal, corrected: e.target.value })}
-                                  disabled={Number(tempScoreVal.score) >= (Number(tempScoreVal.maxScore) * 0.6)}
-                                >
-                                  <option value="ผ่านเกณฑ์">ผ่านเกณฑ์ (&gt;= 60%)</option>
-                                  <option value="ยังไม่แก้">ยังไม่แก้</option>
-                                  <option value="แก้แล้ว">แก้แล้ว (ซ่อมผ่าน)</option>
-                                </select>
-                              </td>
-                              <td>
-                                <input
-                                  type="text"
-                                  placeholder="เช่น 20 มิ.ย. 69"
-                                  value={tempScoreVal.retakeDate}
-                                  onChange={(e) => setTempScoreVal({ ...tempScoreVal, retakeDate: e.target.value })}
-                                />
-                              </td>
+                              <td>{sc.retakeDate || '-'}</td>
                               <td style={{ textAlign: 'center' }}>
                                 <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                                  <button
-                                    className="btn-icon-only"
-                                    style={{ color: 'var(--success)', borderColor: 'var(--success)' }}
-                                    onClick={() => handleSaveScoreRow(currentStudent.id, sc.id)}
-                                  >
-                                    <Save size={14} />
+                                  <button className="btn-icon-only" onClick={() => handleStartEditScore(sc)}>
+                                    <Edit3 size={14} />
                                   </button>
                                   <button
                                     className="btn-icon-only"
-                                    onClick={() => { setEditingScoreId(null); setScoreError(''); }}
+                                    style={{ color: 'var(--danger)' }}
+                                    onClick={() => handleDeleteScoreRow(currentStudent.id, sc.id)}
                                   >
-                                    <X size={14} />
+                                    <Trash2 size={14} />
                                   </button>
                                 </div>
                               </td>
                             </tr>
                           );
-                        }
-
-                        return (
-                          <tr key={sc.id}>
-                            <td><strong>{sc.subject}</strong></td>
-                            <td>{sc.unitName}</td>
-                            <td className="font-eng" style={{ textAlign: 'center' }}>{sc.maxScore}</td>
-                            <td className="font-eng" style={{ textAlign: 'center', fontWeight: 'bold' }}>{sc.score}</td>
-                            <td style={{ textAlign: 'center' }}>
-                              {isPass ? (
-                                <span className="badge badge-success">ผ่านเกณฑ์</span>
-                              ) : sc.corrected === 'แก้แล้ว' ? (
-                                <span className="badge badge-success">แก้แล้ว</span>
-                              ) : (
-                                <span className="badge badge-danger">ยังไม่แก้</span>
-                              )}
-                            </td>
-                            <td>{sc.retakeDate || '-'}</td>
-                            <td style={{ textAlign: 'center' }}>
-                              <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                                <button className="btn-icon-only" onClick={() => handleStartEditScore(sc)}>
-                                  <Edit3 size={14} />
-                                </button>
-                                <button
-                                  className="btn-icon-only"
-                                  style={{ color: 'var(--danger)' }}
-                                  onClick={() => handleDeleteScoreRow(currentStudent.id, sc.id)}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: 50, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
@@ -1272,87 +1333,93 @@ export default function TeacherDashboard({
                   <h3 className="table-title">รายชื่อนักเรียนในห้อง ({filteredStudents.length} คน)</h3>
                 </div>
 
-                <table className="app-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '15%' }}>รหัสประจำตัว</th>
-                      <th style={{ width: '30%' }}>ชื่อ-นามสกุล</th>
-                      <th style={{ width: '15%' }}>วันเกิด</th>
-                      <th style={{ width: '20%' }}>ระดับชั้น</th>
-                      <th style={{ width: '20%', textAlign: 'center' }}>จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.map(st => {
-                      const isEditing = editingStudent === st.id;
-                      return (
-                        <tr key={st.id}>
-                          <td className="font-eng" style={{ fontWeight: 'bold' }}>{st.id}</td>
-                          <td>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ padding: '6px 12px' }}
-                                value={editStudentName}
-                                onChange={(e) => setEditStudentName(e.target.value)}
-                              />
-                            ) : (
-                              st.name
-                            )}
-                          </td>
-                          <td className="font-eng" style={{ fontSize: 13 }}>
-                            {st.birthDate || '-'}
-                          </td>
-                          <td>{st.classLevel}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            {isEditing ? (
-                              <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                                <button
-                                  className="btn-icon-only"
-                                  style={{ color: 'var(--success)' }}
-                                  onClick={() => {
-                                    if (!editStudentName) return;
-                                    const updated = students.map(s =>
-                                      s.id === st.id ? { ...s, name: editStudentName } : s
-                                    );
-                                    onUpdateStudents(updated);
-                                    setEditingStudent(null);
-                                    setEditStudentName('');
-                                  }}
-                                >
-                                  <Save size={14} />
-                                </button>
-                                <button
-                                  className="btn-icon-only"
-                                  onClick={() => { setEditingStudent(null); setEditStudentName(''); }}
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                                <button
-                                  className="btn-icon-only"
-                                  onClick={() => { setEditingStudent(st.id); setEditStudentName(st.name); }}
-                                >
-                                  <Edit3 size={14} />
-                                </button>
-                                <button
-                                  className="btn-icon-only"
-                                  style={{ color: 'var(--danger)' }}
-                                  onClick={() => handleDeleteStudent(st.id)}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="table-responsive">
+                  <table className="app-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '12%' }}>รหัสนักเรียน</th>
+                        <th style={{ width: '25%' }}>ชื่อ-นามสกุล</th>
+                        <th style={{ width: '15%' }}>วัน/เดือน/ปี เกิด</th>
+                        <th style={{ width: '15%' }}>เลขบัตรประชาชน</th>
+                        <th style={{ width: '13%' }}>ระดับชั้น</th>
+                        <th style={{ width: '20%', textAlign: 'center' }}>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStudents.map(st => {
+                        const isEditing = editingStudent === st.id;
+                        return (
+                          <tr key={st.id}>
+                            <td className="font-eng" style={{ fontWeight: 'bold' }}>{st.id}</td>
+                            <td>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  style={{ padding: '6px 12px' }}
+                                  value={editStudentName}
+                                  onChange={(e) => setEditStudentName(e.target.value)}
+                                />
+                              ) : (
+                                st.name
+                              )}
+                            </td>
+                            <td className="font-eng" style={{ fontSize: 13 }}>
+                              {st.birthDate || '-'}
+                            </td>
+                            <td className="font-eng" style={{ fontSize: 13 }}>
+                              {st.nationalId || '-'}
+                            </td>
+                            <td>{st.classLevel}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              {isEditing ? (
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                                  <button
+                                    className="btn-icon-only"
+                                    style={{ color: 'var(--success)' }}
+                                    onClick={() => {
+                                      if (!editStudentName) return;
+                                      const updated = students.map(s =>
+                                        s.id === st.id ? { ...s, name: editStudentName } : s
+                                      );
+                                      onUpdateStudents(updated);
+                                      setEditingStudent(null);
+                                      setEditStudentName('');
+                                    }}
+                                  >
+                                    <Save size={14} />
+                                  </button>
+                                  <button
+                                    className="btn-icon-only"
+                                    onClick={() => { setEditingStudent(null); setEditStudentName(''); }}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                                  <button
+                                    className="btn-icon-only"
+                                    onClick={() => { setEditingStudent(st.id); setEditStudentName(st.name); }}
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  <button
+                                    className="btn-icon-only"
+                                    style={{ color: 'var(--danger)' }}
+                                    onClick={() => handleDeleteStudent(st.id)}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -1367,10 +1434,10 @@ export default function TeacherDashboard({
                   <form onSubmit={handleAddStudent}>
                     <div className="modal-body">
                       <div className="input-group">
-                        <label className="input-label">รหัสประจำตัวนักเรียน</label>
+                        <label className="input-label">รหัสนักเรียน</label>
                         <input
                           type="text"
-                          placeholder="เช่น 1641"
+                          placeholder="เช่น 1872"
                           className="form-input"
                           value={newStudentId}
                           onChange={(e) => setNewStudentId(e.target.value)}
@@ -1389,12 +1456,24 @@ export default function TeacherDashboard({
                         />
                       </div>
                       <div className="input-group">
-                        <label className="input-label">วันเกิด</label>
+                        <label className="input-label">วัน/เดือน/ปี เกิด</label>
                         <input
-                          type="date"
+                          type="text"
+                          placeholder="เช่น 15/05/2018"
                           className="form-input"
                           value={newStudentBirthDate}
                           onChange={(e) => setNewStudentBirthDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">เลขบัตรประชาชน</label>
+                        <input
+                          type="text"
+                          maxLength="13"
+                          placeholder="เช่น 1234567890123"
+                          className="form-input font-eng"
+                          value={newStudentNationalId}
+                          onChange={(e) => setNewStudentNationalId(e.target.value)}
                         />
                       </div>
                       <div className="input-group">
@@ -1442,6 +1521,7 @@ export default function TeacherDashboard({
                           <th>รหัส</th>
                           <th>ชื่อ-นามสกุล</th>
                           <th>วันเกิด</th>
+                          <th>เลขบัตรประชาชน</th>
                           <th>สถานะ</th>
                         </tr>
                       </thead>
@@ -1451,6 +1531,7 @@ export default function TeacherDashboard({
                             <td className="font-eng">{row.id}</td>
                             <td>{row.name}</td>
                             <td className="font-eng" style={{ fontSize: 12 }}>{row.birthDate || '-'}</td>
+                            <td className="font-eng" style={{ fontSize: 12 }}>{row.nationalId || '-'}</td>
                             <td>
                               {row.isDuplicate ? (
                                 <span className="badge badge-warning">ซ้ำ — ข้าม</span>
@@ -1531,92 +1612,94 @@ export default function TeacherDashboard({
               <div className="table-header-bar">
                 <h3 className="table-title">รายวิชาทั้งหมด ({subjects.length} วิชา)</h3>
               </div>
-              <table className="app-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '50%' }}>ชื่อวิชา</th>
-                    <th style={{ width: '25%', textAlign: 'center' }}>คะแนนเต็มเริ่มต้น</th>
-                    <th style={{ width: '25%', textAlign: 'center' }}>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjects.length === 0 ? (
-                    <tr className="no-hover">
-                      <td colSpan="3" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>
-                        ยังไม่มีวิชาในระบบ กรุณาเพิ่มวิชาใหม่
-                      </td>
+              <div className="table-responsive">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '50%' }}>ชื่อวิชา</th>
+                      <th style={{ width: '25%', textAlign: 'center' }}>คะแนนเต็มเริ่มต้น</th>
+                      <th style={{ width: '25%', textAlign: 'center' }}>จัดการ</th>
                     </tr>
-                  ) : (
-                    subjects.map(subj => {
-                      const isEditing = editingSubjectId === subj.id;
-                      if (isEditing) {
+                  </thead>
+                  <tbody>
+                    {subjects.length === 0 ? (
+                      <tr className="no-hover">
+                        <td colSpan="3" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>
+                          ยังไม่มีวิชาในระบบ กรุณาเพิ่มวิชาใหม่
+                        </td>
+                      </tr>
+                    ) : (
+                      subjects.map(subj => {
+                        const isEditing = editingSubjectId === subj.id;
+                        if (isEditing) {
+                          return (
+                            <tr key={subj.id} className="score-edit-row">
+                              <td>
+                                <input
+                                  type="text"
+                                  value={editSubjectName}
+                                  onChange={(e) => setEditSubjectName(e.target.value)}
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <input
+                                  type="number"
+                                  style={{ textAlign: 'center', width: 80 }}
+                                  value={editSubjectMaxScore}
+                                  min="1"
+                                  onChange={(e) => setEditSubjectMaxScore(e.target.value)}
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                                  <button
+                                    className="btn-icon-only"
+                                    style={{ color: 'var(--success)', borderColor: 'var(--success)' }}
+                                    onClick={() => handleSaveSubject(subj.id)}
+                                  >
+                                    <Save size={14} />
+                                  </button>
+                                  <button className="btn-icon-only" onClick={() => setEditingSubjectId(null)}>
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+
                         return (
-                          <tr key={subj.id} className="score-edit-row">
-                            <td>
-                              <input
-                                type="text"
-                                value={editSubjectName}
-                                onChange={(e) => setEditSubjectName(e.target.value)}
-                              />
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <input
-                                type="number"
-                                style={{ textAlign: 'center', width: 80 }}
-                                value={editSubjectMaxScore}
-                                min="1"
-                                onChange={(e) => setEditSubjectMaxScore(e.target.value)}
-                              />
-                            </td>
+                          <tr key={subj.id}>
+                            <td><strong>{subj.name}</strong></td>
+                            <td className="font-eng" style={{ textAlign: 'center' }}>{subj.defaultMaxScore}</td>
                             <td style={{ textAlign: 'center' }}>
                               <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                                 <button
                                   className="btn-icon-only"
-                                  style={{ color: 'var(--success)', borderColor: 'var(--success)' }}
-                                  onClick={() => handleSaveSubject(subj.id)}
+                                  onClick={() => {
+                                    setEditingSubjectId(subj.id);
+                                    setEditSubjectName(subj.name);
+                                    setEditSubjectMaxScore(subj.defaultMaxScore);
+                                  }}
                                 >
-                                  <Save size={14} />
+                                  <Edit3 size={14} />
                                 </button>
-                                <button className="btn-icon-only" onClick={() => setEditingSubjectId(null)}>
-                                  <X size={14} />
+                                <button
+                                  className="btn-icon-only"
+                                  style={{ color: 'var(--danger)' }}
+                                  onClick={() => handleDeleteSubject(subj.id)}
+                                >
+                                  <Trash2 size={14} />
                                 </button>
                               </div>
                             </td>
                           </tr>
                         );
-                      }
-
-                      return (
-                        <tr key={subj.id}>
-                          <td><strong>{subj.name}</strong></td>
-                          <td className="font-eng" style={{ textAlign: 'center' }}>{subj.defaultMaxScore}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                              <button
-                                className="btn-icon-only"
-                                onClick={() => {
-                                  setEditingSubjectId(subj.id);
-                                  setEditSubjectName(subj.name);
-                                  setEditSubjectMaxScore(subj.defaultMaxScore);
-                                }}
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                              <button
-                                className="btn-icon-only"
-                                style={{ color: 'var(--danger)' }}
-                                onClick={() => handleDeleteSubject(subj.id)}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1638,54 +1721,56 @@ export default function TeacherDashboard({
                 <h3 className="table-title">รายชื่อผู้ปกครองที่เซ็นรับทราบแล้ว</h3>
               </div>
 
-              <table className="app-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '15%' }}>รหัสนักเรียน</th>
-                    <th style={{ width: '30%' }}>ชื่อนักเรียน</th>
-                    <th style={{ width: '25%' }}>ชื่อผู้ลงนาม (ผู้ปกครอง)</th>
-                    <th style={{ width: '30%' }}>ลงนามเมื่อวันที่ / เวลา</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const filteredAcks = acknowledgements.filter(ack =>
-                      filteredStudents.some(st => st.id === ack.studentId)
-                    );
-
-                    if (filteredAcks.length === 0) {
-                      return (
-                        <tr className="no-hover">
-                          <td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                            ยังไม่มีผู้ปกครองในห้องเรียนนี้ลงชื่อรับทราบผลสอบ
-                          </td>
-                        </tr>
+              <div className="table-responsive">
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20%' }}>รหัสนักเรียน</th>
+                      <th style={{ width: '25%' }}>ชื่อนักเรียน</th>
+                      <th style={{ width: '25%' }}>ชื่อผู้ลงนาม (ผู้ปกครอง)</th>
+                      <th style={{ width: '30%' }}>ลงนามเมื่อวันที่ / เวลา</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const filteredAcks = acknowledgements.filter(ack =>
+                        filteredStudents.some(st => st.id === ack.studentId)
                       );
-                    }
 
-                    return filteredAcks.map((ack, idx) => {
-                      const student = students.find(s => s.id === ack.studentId);
-                      return (
-                        <tr key={idx}>
-                          <td className="font-eng" style={{ fontWeight: 'bold' }}>{ack.studentId}</td>
-                          <td>{student ? student.name : 'ไม่พบข้อมูลนักเรียน'}</td>
-                          <td>
-                            <span style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontWeight: 'bold', color: 'var(--primary)' }}>
-                              {ack.parentName}
-                            </span>
-                          </td>
-                          <td className="font-eng">
-                            {new Date(ack.timestamp).toLocaleDateString('th-TH', {
-                              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                              hour: '2-digit', minute: '2-digit', second: '2-digit'
-                            })} น.
-                          </td>
-                        </tr>
-                      );
-                    });
-                  })()}
-                </tbody>
-              </table>
+                      if (filteredAcks.length === 0) {
+                        return (
+                          <tr className="no-hover">
+                            <td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                              ยังไม่มีผู้ปกครองในห้องเรียนนี้ลงชื่อรับทราบผลสอบ
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filteredAcks.map((ack, idx) => {
+                        const student = students.find(s => s.id === ack.studentId);
+                        return (
+                          <tr key={idx}>
+                            <td className="font-eng" style={{ fontWeight: 'bold' }}>{ack.studentId}</td>
+                            <td>{student ? student.name : 'ไม่พบข้อมูลนักเรียน'}</td>
+                            <td>
+                              <span style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontWeight: 'bold', color: 'var(--primary)' }}>
+                                {ack.parentName}
+                              </span>
+                            </td>
+                            <td className="font-eng">
+                              {new Date(ack.timestamp).toLocaleDateString('th-TH', {
+                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                              })} น.
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1701,10 +1786,7 @@ export default function TeacherDashboard({
             </header>
 
             {/* Settings 2-column grid: School Info + PIN Change */}
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
-              gap: 24, alignItems: 'start'
-            }}>
+            <div className="settings-grid">
               {/* School info form */}
               <div style={{
                 background: 'var(--bg-card)', padding: 32,
